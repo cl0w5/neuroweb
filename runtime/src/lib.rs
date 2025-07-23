@@ -7,6 +7,8 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod assets;
+use assets::*;
+
 mod weights;
 pub mod xcm_config;
 
@@ -63,7 +65,6 @@ pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier};
 use weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
-use xcm::v3::MultiLocation;
 use xcm_config::XcmOriginToTransactDispatchOrigin;
 
 #[cfg(any(feature = "std", test))]
@@ -1138,6 +1139,25 @@ impl pallet_sudo::Config for Runtime {
     type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
 }
 
+parameter_types! {
+    pub const TracWrapperPalletId: PalletId = PalletId(*b"wrappers");
+    pub const LocalTracAssetId: UnifiedAssetId = LOCAL_TRAC_UNIFIED_ASSET_ID;
+    pub const ForeignTracAssetId: UnifiedAssetId = FOREIGN_TRAC_UNIFIED_ASSET_ID;
+
+}
+
+impl pallet_wrapper::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type MultiCurrency = assets::MultiCurrencyAdapter;
+    type AssetId = assets::UnifiedAssetId;
+    type Balance = Balance;
+    type LocalTracAssetId = LocalTracAssetId; // Local TRAC asset ID
+    type ForeignTracAssetId = ForeignTracAssetId; // Define this constant
+    type PalletId = TracWrapperPalletId; // Define this constant
+}
+
+
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub struct Runtime
@@ -1170,6 +1190,7 @@ construct_runtime!(
         Aura: pallet_aura::{Pallet, Storage, Config<T>} = 23,
         AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config<T>} = 24,
         ParachainStaking: pallet_parachain_staking = 25,
+        Wrapper: pallet_wrapper = 26,
 
         // XCM helpers.
         XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
