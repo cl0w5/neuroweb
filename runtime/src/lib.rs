@@ -634,7 +634,7 @@ impl pallet_treasury::Config for Runtime {
 	type BalanceConverter = UnityAssetBalanceConversion;
 	type PayoutPeriod = ConstU32<0>;
 	#[cfg(feature = "runtime-benchmarks")]
-	type BenchmarkHelper = BenchmarkHelper;
+	type BenchmarkHelper = ();
 }
 
 pub struct MergeAccountEvm;
@@ -1218,7 +1218,6 @@ construct_runtime!(
 );
 
 #[cfg(feature = "runtime-benchmarks")]
-#[macro_use]
 extern crate frame_benchmarking;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -1226,13 +1225,13 @@ mod benches {
     frame_benchmarking::define_benchmarks!(
         [frame_system, SystemBench::<Runtime>]
         [pallet_balances, Balances]
-        [pallet_collective, CouncilCollective]
         [pallet_democracy, Democracy]
         [pallet_identity, Identity]
         [pallet_preimage, Preimage]
         [pallet_proxy, Proxy]
         [pallet_timestamp, Timestamp]
         [pallet_parachain_staking, ParachainStaking]
+        [pallet_wrapper, Wrapper]
         [cumulus_pallet_xcmp_queue, XcmpQueue]
         [pallet_utility, Utility]
     );
@@ -1821,7 +1820,7 @@ impl_runtime_apis! {
             use frame_system_benchmarking::Pallet as SystemBench;
             impl frame_system_benchmarking::Config for Runtime {}
 
-            use frame_support::traits::{TrackedStorageKey, WhitelistedStorageKeys};
+            use frame_support::traits::WhitelistedStorageKeys;
 			let whitelist = AllPalletsWithSystem::whitelisted_storage_keys();
 
             let mut batches = Vec::<BenchmarkBatch>::new();
