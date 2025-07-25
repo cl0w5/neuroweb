@@ -189,7 +189,14 @@ pub fn run() -> Result<()> {
                 BenchmarkCmd::Pallet(cmd) => {
                     if cfg!(feature = "runtime-benchmarks") {
                         #[allow(deprecated)]
-                        runner.sync_run(|config| cmd.run::<HashingFor<Block>, ()>(config))
+                        runner.sync_run(|config| {
+                            cmd.run::<HashingFor<Block>, (
+                                sp_io::SubstrateHostFunctions,
+                                cumulus_client_service::storage_proof_size::HostFunctions,
+                                frame_benchmarking::benchmarking::HostFunctions,
+                                cumulus_client_service::ParachainHostFunctions,
+                            )>(config)
+                        })
                     } else {
                         Err("Benchmarking wasn't enabled when building the node. \
 					You can enable it with `--features runtime-benchmarks`."
