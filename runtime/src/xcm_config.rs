@@ -379,22 +379,17 @@ where
 
 pub struct NativeAssetIsReserve;
 impl ContainsPair<Asset, Location> for NativeAssetIsReserve {
-    fn contains(asset: &Asset, origin: &Location) -> bool {
-        if asset.id == AssetId(TokenLocation::get()) {
-            // This chain is reserve for NEURO
-            return origin == &Location::here();
-        }
-        false
+    fn contains(asset: &Asset, _origin: &Location) -> bool {
+        asset.id == AssetId(TokenLocation::get())
     }
 }
-
 
 type Reserves = (
     // Relaychain (DOT) from Asset Hub
     Case<RelayChainNativeAssetFromAssetHub>,
     // Assets bridged from different consensus systems held in reserve on Asset Hub.
     IsForeignConcreteAssetFrom<AssetHubLocation>,
-    // Assets which the reserve is the same as the origin.
+    // This chain is reserve for NEURO
     NativeAssetIsReserve,
 );
 
