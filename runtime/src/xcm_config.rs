@@ -83,9 +83,21 @@ pub type LocationToAccountId = (
     ExternalConsensusLocationsConverterFor<UniversalLocation, AccountId>,
 );
 
+pub struct IsNativeAsset;
+impl MatchesFungibles<Location, u128> for IsNativeAsset {
+    fn matches_fungibles(asset: &Asset) -> Result<(Location, u128), MatchError> {
+        if asset.id == AssetId(TokenLocation::get()) {
+            if let Fungible(amount) = asset.fun {
+                return Ok((TokenLocation::get(), amount))
+            }
+        }
+        Err(MatchError::AssetNotHandled)
+    }
+}
+
 // Handle native currency (NEURO) via Balances pallet
 pub type NativeAssetTransactor =
-    FungibleAdapter<Balances, IsConcrete<TokenLocation>, LocationToAccountId, AccountId, ()>;
+    FungibleAdapter<Balances, IsNativeAsset, LocationToAccountId, AccountId, ()>;
 
 pub type ForeignAssetTransactor = FungiblesAdapter<
     ForeignAssets,
