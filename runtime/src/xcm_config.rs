@@ -349,6 +349,10 @@ where
     Origin: Get<Location>,
 {
     fn matches_fungibles(asset: &Asset) -> Result<(Location, u128), MatchError> {
+        if asset.id == AssetId(TokenLocation::get()) {
+            return Err(MatchError::AssetNotHandled);
+        }
+
         let expected_origin = Origin::get();
 
         let AssetId(asset_location) = &asset.id;
@@ -379,6 +383,10 @@ where
     Origin: Get<Location>,
 {
     fn contains(asset: &Asset, origin: &Location) -> bool {
+        if asset.id == AssetId(TokenLocation::get()) {
+            return false;
+        }
+
         let loc = Origin::get();
         &loc == origin
             && matches!(
