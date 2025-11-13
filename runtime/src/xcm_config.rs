@@ -32,7 +32,7 @@ use xcm_builder::{
 };
 use xcm_executor::{
     traits::{
-        ConvertLocation, DropAssets, Error as MatchError, MatchesFungible, MatchesFungibles, WeightTrader,
+        ConvertLocation, DropAssets, Error as MatchError, MatchesFungibles, WeightTrader,
         WithOriginFilter,
     },
     AssetsInHolding, XcmExecutor,
@@ -83,30 +83,9 @@ pub type LocationToAccountId = (
     ExternalConsensusLocationsConverterFor<UniversalLocation, AccountId>,
 );
 
-pub struct IsNativeAsset;
-impl MatchesFungible<u128> for IsNativeAsset {
-    fn matches_fungible(asset: &Asset) -> Option<u128> {
-        // Real native token, matches your TokenLocation
-        if asset.id == AssetId(TokenLocation::get()) {
-            if let Fungible(amount) = asset.fun {
-                return Some(amount);
-            }
-        }
-
-        // Benchmark-only synthetic native asset: Location::here()
-        #[cfg(feature = "runtime-benchmarks")]
-        if asset.id == AssetId(Location::here()) {
-            if let Fungible(amount) = asset.fun {
-                return Some(amount);
-            }
-        }
-
-        None
-    }
-}
-
 // Handle native currency (NEURO) via Balances pallet
-pub type NativeAssetTransactor = FungibleAdapter<Balances, IsNativeAsset, LocationToAccountId, AccountId, ()>;
+pub type NativeAssetTransactor =
+    FungibleAdapter<Balances, IsConcrete<TokenLocation>, LocationToAccountId, AccountId, ()>;
 
 pub type ForeignAssetTransactor = FungiblesAdapter<
     ForeignAssets,
@@ -398,13 +377,25 @@ where
     }
 }
 
+pub struct NativeAssetIsReserve;
+impl ContainsPair<Asset, Location> for NativeAssetIsReserve {
+    fn contains(asset: &Asset, origin: &Location) -> bool {
+        if asset.id == AssetId(TokenLocation::get()) {
+            // This chain is reserve for NEURO
+            return origin == &Location::here();
+        }
+        false
+    }
+}
+
+
 type Reserves = (
     // Relaychain (DOT) from Asset Hub
     Case<RelayChainNativeAssetFromAssetHub>,
     // Assets bridged from different consensus systems held in reserve on Asset Hub.
     IsForeignConcreteAssetFrom<AssetHubLocation>,
     // Assets which the reserve is the same as the origin.
-    NativeAsset,
+    NativeAssetIsReserve,
 );
 
 
