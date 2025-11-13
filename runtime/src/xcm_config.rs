@@ -32,7 +32,7 @@ use xcm_builder::{
 };
 use xcm_executor::{
     traits::{
-        ConvertLocation, DropAssets, Error as MatchError, MatchesFungibles, WeightTrader,
+        ConvertLocation, DropAssets, Error as MatchError, MatchesFungible, MatchesFungibles, WeightTrader,
         WithOriginFilter,
     },
     AssetsInHolding, XcmExecutor,
@@ -84,25 +84,24 @@ pub type LocationToAccountId = (
 );
 
 pub struct IsNativeAsset;
-impl MatchesFungibles<Location, u128> for IsNativeAsset {
-    fn matches_fungibles(asset: &Asset) -> Result<(Location, u128), MatchError> {
-        let loc = &asset.id.0;
-
-        let is_token_location = *loc == TokenLocation::get();
-
-        #[cfg(feature = "runtime-benchmarks")]
-        let is_here = *loc == Location::here();
-
-        #[cfg(not(feature = "runtime-benchmarks"))]
-        let is_here = false;
-
-        if is_token_location || is_here {
+impl MatchesFungible<u128> for IsNativeAsset {
+    fn matches_fungible(asset: &Asset) -> Option<u128> {
+        // Real native token, matches your TokenLocation
+        if asset.id == AssetId(TokenLocation::get()) {
             if let Fungible(amount) = asset.fun {
-                return Ok((loc.clone(), amount));
+                return Some(amount);
             }
         }
 
-        Err(MatchError::AssetNotHandled)
+        // Benchmark-only synthetic native asset: Location::here()
+        #[cfg(feature = "runtime-benchmarks")]
+        if asset.id == AssetId(Location::here()) {
+            if let Fungible(amount) = asset.fun {
+                return Some(amount);
+            }
+        }
+
+        None
     }
 }
 
