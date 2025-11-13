@@ -32,7 +32,7 @@ use xcm_builder::{
 };
 use xcm_executor::{
     traits::{
-        ConvertLocation, DropAssets, Error as MatchError, MatchesFungibles, WeightTrader,
+        ConvertLocation, DropAssets, Error as MatchError, MatchesFungible, MatchesFungibles, WeightTrader,
         WithOriginFilter,
     },
     AssetsInHolding, XcmExecutor,
@@ -84,14 +84,16 @@ pub type LocationToAccountId = (
 );
 
 pub struct IsNativeAsset;
-impl MatchesFungibles<Location, u128> for IsNativeAsset {
-    fn matches_fungibles(asset: &Asset) -> Result<(Location, u128), MatchError> {
+impl MatchesFungible<u128> for IsNativeAsset {
+    fn matches_fungible(asset: &Asset) -> Option<u128> {
+        // Native NEURO asset = TokenLocation
         if asset.id == AssetId(TokenLocation::get()) {
             if let Fungible(amount) = asset.fun {
-                return Ok((TokenLocation::get(), amount))
+                return Some(amount);
             }
         }
-        Err(MatchError::AssetNotHandled)
+
+        None
     }
 }
 
