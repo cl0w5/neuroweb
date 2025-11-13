@@ -620,22 +620,16 @@ mod benchmarking {
         }
 
         fn reserve_transferable_asset_and_dest() -> Option<(Asset, Location)> {
-            // open a channel to a random sibling for benchmarking
             ParachainSystem::open_outbound_hrmp_channel_for_benchmarks_or_tests(
-                benchmarking::RandomParaId::get(),
+                RandomParaId::get()
             );
-
-            let who = frame_benchmarking::whitelisted_caller();
-            let balance = 100 * benchmarking::ExistentialDeposit::get();
-            let _ = <Balances as Currency<_>>::make_free_balance_be(&who, balance);
 
             Some((
                 Asset {
-                    id: AssetId(TokenLocation::get()),
-                    fun: Fungible(10 * benchmarking::ExistentialDeposit::get()),
+                    fun: Fungible(ExistentialDeposit::get()),
+                    id: AssetId(TokenLocation::get())
                 },
-                // destination: parent → sibling parachain
-                (Parent, Parachain(benchmarking::RandomParaId::get().into())).into(),
+                ParentThen(Parachain(RandomParaId::get().into()).into()).into(),
             ))
         }
 
